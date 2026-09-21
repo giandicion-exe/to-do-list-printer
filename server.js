@@ -30,9 +30,11 @@ const getRedirectUri = (req) => {
     if (process.env.GOOGLE_REDIRECT_URI) {
         return process.env.GOOGLE_REDIRECT_URI;
     }
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
-    const host = req.headers['host'];
-    return `${protocol}://${host}/auth/google/callback`;
+    const host = req.headers['host'] || '';
+    if (host.includes('onrender.com')) {
+        return `https://${host}/auth/google/callback`;
+    }
+    return `https://to-do-list-printer.onrender.com/auth/google/callback`;
 };
 
 const SCOPES = [
