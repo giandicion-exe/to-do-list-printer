@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To Do List - Dashboard</title>
+    <link rel="icon" type="image/png" href="/bow2.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pw-pink-bg: #fbebf3;
+            --pw-pink-main: #ff91c2;
+            --pw-pink-dark: #e85d9e;
+            --pw-purple-accent: #a359a3;
+            --pw-purple-deep: #583346;
+            --pw-cream-paper: #fffeee;
+            --pw-text-dark: #422033;
+            --pw-glass-bg: rgba(255, 255, 255, 0.65);
+            --pw-glass-border: rgba(255, 182, 218, 0.45);
+            --pw-neon-shadow: rgba(255, 145, 194, 0.35);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at 10% 10%, #ffeaf4 0%, #fbebf3 50%, #f4d3e5 100%);
+            color: var(--pw-text-dark);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(rgba(232, 93, 158, 0.12) 1.5px, transparent 1.5px);
+            background-size: 28px 28px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-card {
+            background: var(--pw-glass-bg);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 2px solid var(--pw-glass-border);
+            border-radius: 24px;
+            box-shadow: 0 12px 35px var(--pw-neon-shadow);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 16px 45px rgba(232, 93, 158, 0.28);
+        }
+
+        .navbar-pink {
+            background: linear-gradient(135deg, rgba(255, 145, 194, 0.85) 0%, rgba(163, 89, 163, 0.85) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--pw-glass-border);
+            box-shadow: 0 4px 20px rgba(163, 89, 163, 0.2);
+        }
+
+        .profile-badge {
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid var(--pw-pink-main);
+            color: var(--pw-purple-deep);
+            border-radius: 50px;
+            padding: 8px 22px;
+            font-weight: 700;
+        }
+
+        .typewriter-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .typewriter-heart-top {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            width: 42px;
+            z-index: 10;
+            pointer-events: none;
+            image-rendering: pixelated;
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        .heart-pop {
+            opacity: 1 !important;
+            animation: heartPulse 1s infinite alternate ease-in-out;
+        }
+
+        @keyframes heartPulse {
+            0% { transform: translateX(-50%) translateY(0) scale(1); }
+            100% { transform: translateX(-50%) translateY(-12px) scale(1.3); }
+        }
+
+        .printed-receipt-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: -35px;
+            overflow: hidden;
+        }
+
+        .printed-receipt {
+            background: var(--pw-cream-paper);
+            border: 2.5px dashed var(--pw-pink-dark);
+            border-radius: 16px;
+            width: 340px;
+            height: 250px;
+            padding: 16px 20px;
+            box-shadow: 0 -6px 20px rgba(163, 89, 163, 0.15);
+            display: none;
+            margin-bottom: 25px;
+            transform: translateY(100%);
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+        }
+
+        .paper-feed-anim {
+            display: block !important;
+            animation: feedPaperUp 2.5s steps(14, end) forwards;
+        }
+
+        @keyframes feedPaperUp {
+            0% { transform: translateY(100%); opacity: 0.2; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .typewriter-img-box {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .typewriter-img {
+            width: 100%;
+            height: auto;
+            image-rendering: pixelated;
+        }
+
+        .printing-vibrate {
+            animation: typewriterVibrate 0.08s infinite alternate;
+        }
+
+        @keyframes typewriterVibrate {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(2px, -2px); }
+            100% { transform: translate(-2px, 2px); }
+        }
+
+        .typewriter-screen {
+            position: absolute;
+            top: 26.5%; left: 21.5%; width: 61.5%; height: 10.5%;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent;
+            color: #2b7063;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 0.5px;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .pixel-print-btn {
+            background: none; border: none; padding: 0;
+            cursor: pointer; margin-top: 15px; position: relative; z-index: 4;
+            transition: transform 0.15s ease, filter 0.2s ease;
+        }
+
+        .pixel-print-btn:hover {
+            transform: scale(1.1) rotate(-2deg);
+            filter: drop-shadow(0 8px 16px rgba(232, 93, 158, 0.45));
+        }
+
+        .pixel-print-btn:active { transform: scale(0.92); }
+
+        .pixel-print-img { height: 85px; width: auto; image-rendering: pixelated; }
+
+        .receipt-modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(66, 32, 51, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.35s ease;
+        }
+
+        .receipt-modal-backdrop.active { opacity: 1; pointer-events: auto; }
+
+        .zoomed-receipt-card {
+            background: var(--pw-cream-paper);
+            border: 3px dashed var(--pw-pink-dark);
+            border-radius: 20px;
+            width: 92%; max-width: 480px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+            transform: scale(0.7) translateY(40px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .receipt-modal-backdrop.active .zoomed-receipt-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .btn-pink-gradient {
+            background: linear-gradient(135deg, var(--pw-pink-main) 0%, var(--pw-purple-accent) 100%);
+            border: none; color: white; font-weight: 700;
+            border-radius: 12px; transition: all 0.2s ease;
+        }
+
+        .btn-pink-gradient:hover {
+            background: linear-gradient(135deg, var(--pw-pink-dark) 0%, var(--pw-purple-accent) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px var(--pw-neon-shadow);
+            color: white;
+        }
+
+        .filter-btn {
+            background: #ffffff;
+            border: 2px solid var(--pw-glass-border);
+            color: var(--pw-purple-deep);
+            font-weight: 700;
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--pw-pink-main);
+            color: white;
+            border-color: var(--pw-pink-main);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-pink py-3 sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/dashboard" style="font-size: 1.25rem;">
+                <span></span> I POP UP KO BABY
+            </a>
+            <a href="/logout" class="btn btn-sm btn-outline-light rounded-pill px-4 fw-bold">DISCONNECT</a>
+        </div>
+    </nav>
+
+    <div class="container py-4" style="position: relative; z-index: 1;">
+        <% if (student) { %>
+            <div class="d-flex flex-wrap align-items-center justify-content-between profile-badge mb-4 shadow-sm gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size: 1.2rem;"></span>
+                    <span><strong>WELCOME, <%= student.fullName.toUpperCase() %>!</strong> (<%= student.studentId %>)</span>
+                </div>
+                <div class="small opacity-75 fw-semibold">
+                    <%= student.email %>
+                </div>
+            </div>
+        <% } %>
+
+        <div class="card glass-card mb-5">
+            <div class="card-body p-4 text-center">
+                <h4 class="fw-extrabold mb-1" style="color: var(--pw-purple-accent); font-weight: 800;">READY TO START YOUR DAY?</h4>
+                <p class="text-muted small mb-4 fw-semibold">CLICK THE PRINT BUTTON BELOW TO PRINT YOUR WORK...</p>
+
+                <div class="typewriter-wrapper">
+                    <img src="/heart1.png" id="topHeart" class="typewriter-heart-top" alt="Heart">
+
+                    <% 
+                    let allGcrTasks = []; 
+                    if (classes && classes.length > 0) {
+                        classes.forEach(c => {
+                            if (c.assignments && c.assignments.length > 0) {
+                                c.assignments.forEach(task => {
+                                    if (task.status !== 'COMPLETED') {
+                                        allGcrTasks.push({ ...task, className: c.name });
+                                    }
+                                });
+                            }
+                        });
+                    } 
+                    %>
+
+                    <div class="printed-receipt-container">
+                        <div class="printed-receipt" id="receiptPaper">
+                            <div class="text-center fw-bold border-bottom border-2 pb-1 mb-2" style="color: var(--pw-pink-dark); letter-spacing: 2px;">
+                                 TO-DO LIST
+                            </div>
+                            <div style="font-size: 0.72rem; line-height: 1.4;">
+                                <% if (allGcrTasks.length > 0) { %>
+                                    <% allGcrTasks.slice(0, 2).forEach((item) => { %>
+                                        <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-1">
+                                            <div style="max-width: 200px;" class="text-truncate fw-bold">📌 <%= item.title.toUpperCase() %></div>
+                                            <span class="badge bg-light text-dark border"><%= item.pointsText %></span>
+                                        </div>
+                                    <% }) %>
+                                    <% if (allGcrTasks.length > 2) { %>
+                                        <div class="text-center fw-bold mt-2" style="font-size: 0.65rem; color: var(--pw-pink-dark);">
+                                            + <%= allGcrTasks.length - 2 %> MORE PENDING TASKS...
+                                        </div>
+                                    <% } %>
+                                <% } else { %>
+                                    <div class="text-center py-3 fw-bold" style="color: var(--pw-purple-accent);">
+                                         ALL CLEAR! NO PENDING TASKS.
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="typewriter-img-box" id="typewriterBody">
+                        <img src="/meow_2.png" alt="Pixel Typewriter" class="typewriter-img">
+                        <div class="typewriter-screen">
+                            <span id="typewriterStatus">READY</span>
+                        </div>
+                    </div>
+
+                    <button id="triggerPrintBtn" class="pixel-print-btn" title="Print Receipt">
+                        <img src="/printbutt_2.png" alt="Print" class="pixel-print-img">
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <% if (error) { %>
+            <div id="errorAlert" class="alert alert-danger border-0 shadow-sm rounded-4 p-3 mb-4 fw-bold" style="background-color: #fde8f2; color: var(--pw-pink-dark);">
+                 <%= error.toUpperCase() %>
+            </div>
+        <% } %>
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2 glass-card p-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold small text-uppercase">Filter:</span>
+                <button class="filter-btn active" onclick="filterTasks('ALL', this)">ALL</button>
+                <button class="filter-btn" onclick="filterTasks('PENDING', this)"> PENDING</button>
+                <button class="filter-btn" onclick="filterTasks('COMPLETED', this)"> TURNED IN</button>
+            </div>
+            <div style="min-width: 220px;">
+                <input type="text" id="taskSearchInput" onkeyup="searchTasks()" class="form-control form-control-sm rounded-pill" placeholder="🔍 Search tasks...">
+            </div>
+        </div>
+
+        <% if (classes && classes.length > 0) { %>
+            <% classes.forEach(currentClass => { %>
+                <div class="card glass-card overflow-hidden mb-4 class-card-container">
+                    <div class="p-4 d-flex justify-content-between align-items-center text-white" style="background: linear-gradient(135deg, var(--pw-pink-main) 0%, var(--pw-pink-dark) 100%);">
+                        <div>
+                            <h4 class="mb-1 fw-extrabold"><%= currentClass.name.toUpperCase() %></h4>
+                            <small class="opacity-90 fw-semibold">SECTION: <%= currentClass.section.toUpperCase() %> | CLASS ID: <%= currentClass.id %></small>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-light text-danger fw-bold rounded-pill px-3 shadow-sm" onclick="openConfirmModal('<%= currentClass.id %>', '<%= currentClass.name.toUpperCase() %>')">REMOVE</button>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <% if (currentClass.assignments && currentClass.assignments.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr style="background-color: var(--pw-pink-bg);">
+                                            <th>ASSIGNMENT</th>
+                                            <th>DUE DATE</th>
+                                            <th>POINTS</th>
+                                            <th>STATUS</th>
+                                            <th>ACTION</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% currentClass.assignments.forEach(task => { %>
+                                            <tr class="task-row" data-title="<%= task.title.toLowerCase() %>" data-status="<%= task.status %>">
+                                                <td><strong style="color: var(--pw-text-dark);"><%= task.title.toUpperCase() %></strong></td>
+                                                <td><span class="badge bg-light text-dark border"><%= task.dueDate %></span></td>
+                                                <td><span class="badge" style="background-color: #fce1ee; color: var(--pw-purple-accent);"><%= task.pointsText %></span></td>
+                                                <td>
+                                                    <% if (task.status === 'COMPLETED') { %>
+                                                        <span class="badge bg-success">✅ TURNED IN</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-warning text-dark">⏳ PENDING</span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <a href="<%= task.link %>" target="_blank" class="btn btn-sm btn-outline-danger fw-bold rounded-3">OPEN GCR ↗</a>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-4" style="color: var(--pw-purple-accent);">
+                                <h5> WOOHOO, NO WORK DUE SOON!</h5>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="text-center py-5 text-muted glass-card">
+                <div style="font-size: 3rem;"></div>
+                <h5 class="mt-2 fw-bold" style="color: var(--pw-purple-accent);">NO CLASSES FOUND</h5>
+                <p>No active Google Classrooms.</p>
+            </div>
+        <% } %>
+    </div>
+
+    <div class="receipt-modal-backdrop" id="receiptModal">
+        <div class="zoomed-receipt-card">
+            <div class="text-center border-bottom border-2 pb-2 mb-3">
+                <h5 class="fw-bold mb-0" style="color: var(--pw-pink-dark);">YOUR ACTIVITY TODAY</h5>
+                <small class="text-muted fw-bold">STUDENT: <%= student ? student.fullName.toUpperCase() : 'STUDENT' %></small>
+            </div>
+
+            <div style="max-height: 280px; overflow-y: auto;">
+                <% if (allGcrTasks.length > 0) { %>
+                    <% allGcrTasks.forEach((item) => { %>
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                            <div>
+                                <div style="font-size: 0.72rem; color: var(--pw-purple-accent); font-weight: 800;">[<%= item.className.toUpperCase() %>]</div>
+                                <div class="fw-bold" style="font-size: 0.85rem;">📌 <%= item.title.toUpperCase() %></div>
+                                <div class="text-muted" style="font-size: 0.7rem;">DUE: <%= item.dueDate %> (<%= item.pointsText %>)</div>
+                            </div>
+                            <a href="<%= item.link %>" target="_blank" class="btn btn-sm btn-pink-gradient px-2 py-1" style="font-size: 0.65rem;">OPEN ↗</a>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-4 fw-bold">ALL TASKS COMPLETED!</div>
+                <% } %>
+            </div>
+
+            <button class="btn btn-pink-gradient w-100 mt-3" id="closeReceiptBtn">CLOSE RECEIPT</button>
+        </div>
+    </div>
+
+    <div class="receipt-modal-backdrop" id="confirmModal">
+        <div class="zoomed-receipt-card text-center" style="max-width: 420px; font-family: 'Plus Jakarta Sans', sans-serif;">
+            <div class="mb-3">
+                <span style="font-size: 2.5rem;">⚠️</span>
+            </div>
+            <h5 class="fw-bold mb-2" style="color: var(--pw-pink-dark);">UNENROLL CLASSROOM</h5>
+            <p class="text-muted small mb-4 fw-semibold" id="confirmMessage">
+                Are you sure you want to unenroll from this course? This will also remove you from this course in Google Classroom.
+            </p>
+            <form id="confirmRemoveForm" action="/dashboard/remove-class" method="POST" class="m-0">
+                <input type="hidden" name="classId" id="modalClassId">
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light border w-50 fw-bold rounded-pill" onclick="closeConfirmModal()">CANCEL</button>
+                    <button type="submit" class="btn btn-pink-gradient w-50 fw-bold rounded-pill">CONFIRM</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openConfirmModal(classId, className) {
+            const modal = document.getElementById('confirmModal');
+            const msg = document.getElementById('confirmMessage');
+            const inputId = document.getElementById('modalClassId');
+
+            msg.textContent = `Are you sure you want to unenroll from ${className}? This will also remove you from this course in Google Classroom.`;
+            inputId.value = classId;
+
+            modal.classList.add('active');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('active');
+        }
+
+        class RetroAudio {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            playPrintTone() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150 + Math.random() * 80, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playFanfare() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+                    gain.gain.setValueAtTime(0.1, this.ctx.currentTime + idx * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.1 + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + idx * 0.1);
+                    osc.stop(this.ctx.currentTime + idx * 0.1 + 0.25);
+                });
+            }
+        }
+
+        const audio = new RetroAudio();
+
+        function runSketchSequence() {
+            const topHeart = document.getElementById('topHeart');
+            const receiptPaper = document.getElementById('receiptPaper');
+            const typewriterBody = document.getElementById('typewriterBody');
+            const statusElem = document.getElementById('typewriterStatus');
+            const receiptModal = document.getElementById('receiptModal');
+
+            topHeart.classList.add('heart-pop');
+            typewriterBody.classList.add('printing-vibrate');
+            if (statusElem) statusElem.textContent = 'PRINTING...';
+
+            let soundInterval = setInterval(() => audio.playPrintTone(), 100);
+
+            receiptPaper.classList.remove('paper-feed-anim');
+            void receiptPaper.offsetWidth;
+            receiptPaper.classList.add('paper-feed-anim');
+
+            setTimeout(() => {
+                clearInterval(soundInterval);
+                typewriterBody.classList.remove('printing-vibrate');
+                if (statusElem) statusElem.textContent = 'DONE!';
+                audio.playFanfare();
+                receiptModal.classList.add('active');
+            }, 2500);
+        }
+
+        document.getElementById('triggerPrintBtn')?.addEventListener('click', runSketchSequence);
+        document.getElementById('closeReceiptBtn')?.addEventListener('click', () => {
+            document.getElementById('receiptModal')?.classList.remove('active');
+            document.getElementById('topHeart')?.classList.remove('heart-pop');
+            const statusElem = document.getElementById('typewriterStatus');
+            if (statusElem) statusElem.textContent = 'READY';
+        });
+
+        function filterTasks(status, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.querySelectorAll('.task-row').forEach(row => {
+                if (status === 'ALL' || row.getAttribute('data-status') === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function searchTasks() {
+            const query = document.getElementById('taskSearchInput').value.toLowerCase();
+            document.querySelectorAll('.task-row').forEach(row => {
+                const title = row.getAttribute('data-title');
+                if (title.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
