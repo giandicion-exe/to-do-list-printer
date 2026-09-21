@@ -7,6 +7,8 @@ const { google } = require('googleapis');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
@@ -18,14 +20,20 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'gcr-classroom-secret',
     resave: true,
     saveUninitialized: false,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 }
+    cookie: { 
+        maxAge: 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === 'production'
+    }
 }));
 
-const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI
-);
+const getRedirectUri = (req) => {
+    if (process.env.GOOGLE_REDIRECT_URI) {
+        return process.env.GOOGLE_REDIRECT_URI;
+    }
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['host'];
+    return `${protocol}://${host}/auth/google/callback`;
+};
 
 const SCOPES = [
     'https://www.googleapis.com/auth/classroom.courses.readonly',
@@ -114,6 +122,13 @@ app.post('/register', (req, res) => {
 });
 
 app.get('/auth/google', (req, res) => {
+    const dynamicRedirectUri = getRedirectUri(req);
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        dynamicRedirectUri
+    );
+
     const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: SCOPES,
@@ -124,6 +139,13 @@ app.get('/auth/google', (req, res) => {
 
 app.get('/auth/google/callback', async (req, res) => {
     const { code } = req.query;
+    const dynamicRedirectUri = getRedirectUri(req);
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        dynamicRedirectUri
+    );
+
     try {
         const { tokens } = await oauth2Client.getToken(code);
         req.session.tokens = tokens;
@@ -163,6 +185,12 @@ app.post('/api/sync', async (req, res) => {
     if (!req.session.tokens) return res.status(401).json({ success: false, message: 'Unauthorized' });
 
     try {
+        const dynamicRedirectUri = getRedirectUri(req);
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            dynamicRedirectUri
+        );
         oauth2Client.setCredentials(req.session.tokens);
         const classroom = google.classroom({ version: 'v1', auth: oauth2Client });
 
@@ -196,6 +224,12 @@ app.get('/dashboard', async (req, res) => {
     if (!req.session.tokens) return res.redirect('/login');
 
     try {
+        const dynamicRedirectUri = getRedirectUri(req);
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_CLIENT_SECRET,
+            dynamicRedirectUri
+        );
         oauth2Client.setCredentials(req.session.tokens);
         const classroom = google.classroom({ version: 'v1', auth: oauth2Client });
 
@@ -239,6 +273,12 @@ app.post('/dashboard/remove-class', async (req, res) => {
 
     if (classId) {
         try {
+            const dynamicRedirectUri = getRedirectUri(req);
+            const oauth2Client = new google.auth.OAuth2(
+                process.env.GOOGLE_CLIENT_ID,
+                process.env.GOOGLE_CLIENT_SECRET,
+                dynamicRedirectUri
+            );
             oauth2Client.setCredentials(req.session.tokens);
             const classroom = google.classroom({ version: 'v1', auth: oauth2Client });
 
@@ -246,7 +286,6 @@ app.post('/dashboard/remove-class', async (req, res) => {
                 courseId: classId,
                 userId: 'me'
             });
-            console.log(`Successfully unenrolled from GCR course ID: ${classId}`);
         } catch (apiErr) {
             console.error('Failed to unenroll via GCR API:', apiErr.message);
         }
